@@ -1,0 +1,47 @@
+def quotient():
+    pass
+
+def remainder():
+    pass
+
+def circle_area():
+    pass
+
+def f_to_c():
+    pass
+
+def c_to_f():
+    pass
+
+def hg_grade():
+    pass
+
+def grade_needed():
+    pass
+
+def linear_eq():
+    pass
+
+def sq_rt():
+    pass
+
+def nth_rt():
+    pass
+
+def distance():
+    pass
+
+def abs_val():
+    pass
+
+def digit_chop():
+    pass
+
+def alarm_clock():
+    pass
+
+def make_change():
+    pass
+
+def pt_to_line():
+    pass

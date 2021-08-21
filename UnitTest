@@ -1,8 +1,9 @@
 # The Way of the Function Unit Test
-# 9/9/2020 12:04 am
+# 8/20/2021 8:57 pm
 
 #Helper Functions
 import operator as op
+import traceback
 
 eq_comp = op.__eq__
 is_comp = op.is_
@@ -110,8 +111,14 @@ class UnitTest():
                         actual_value = unit.func(*arg)
                     else:
                         actual_value = unit.func(arg) 
-                except:
-                    test_file.write("Crash! No point!\n")
+                except Exception as err:
+                    # Do not print error if function hasn't been implemented (no arguments defined but passing args error).
+										# This avoids giving students a wall of errors when starting project.
+                    if "takes 0 positional arguments but" not in str(err):
+                        # Print Error to console
+                        traceback.print_exc()
+										
+                    test_file.write("Crash! No points!\n")
                     pts_lost_dict[unit.name] += 1
                 else:
                     if not unit.is_mutator:

@@ -114,7 +114,7 @@ class UnitTest():
                         actual_value = unit.func(arg) 
                 except Exception as err:
                     # Do not print error if function hasn't been implemented (no args defined but passing args error) to avoid giving students a wall of errors when starting project. 
-										# Also do not print error if the current function (unit) is known to contain an error. This avoids wall of errors caused by the multiple test cases.
+                    # Also do not print error if the current function (unit) is known to contain an error. This avoids wall of errors caused by the multiple test cases.
                     if "takes 0 positional arguments but" not in str(err) and unit.name not in known_bad_units:
                         # Print Error to console
                         traceback.print_exc()

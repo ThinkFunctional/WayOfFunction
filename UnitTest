@@ -1,11 +1,29 @@
-# The Way of the Function Unit Test
-# 9/9/2020 12:04 am
+# Name: Way of the Func Unit Test
+# Time: 7.5.2023 @ 11:47 am
 
-#Helper Functions
+# Helper Functions
 import operator as op
+import traceback
+from datetime import datetime
 
 eq_comp = op.__eq__
 is_comp = op.is_
+
+def perm_eq(p1, p2):
+    if not isinstance(p1, str) or not isinstance(p2, str):
+        return False
+    def to_dct(perm):
+        split_perm = perm[1:len(perm)-1].split(')(')
+        dct = {}
+        for chunk in split_perm:
+            n = len(chunk)
+            for i in range(n):
+                if i < n - 1:
+                    dct[chunk[i]] = chunk[i+1]
+                else:
+                    dct[chunk[i]] = chunk[0]
+        return dct
+    return(to_dct(p1) == to_dct(p2))
 
 def elems_comp(a_list, b_list):
     # Return true if every element of a is an element of b and vice versa, False otherwise
@@ -32,6 +50,8 @@ def eq_not_is(an_obj, another_obj):
     return (an_obj == another_obj) and not(an_obj is another_obj)
 
 def approx_eq(expected, actual):
+    if expected is None and actual is None:
+        return True
     if isinstance(expected, (int, float, complex)):
         if not isinstance(actual, (int, float, complex)):
             return False
@@ -61,14 +81,14 @@ def build_arg_str(args, is_poly):
 
 class Unit():
 
-    def __init__(self, func, name, cases, is_polyadic, is_mutator, test_type):
+    def __init__(self, func, name, cases, is_polyadic, is_mutator, test_type, extra_credit = False):
         # If the function is polyadic, we need to * the input so that it unpacks.
         # If the function is a mutator, we don't ask for its return value.
         # Instead we compare the input after the function is called to the correct mutated value.
         # Six test types are required:
-        # 1. Verify equality of content: eq_comp
+        # 1. Verify equality of value: eq_comp
         # 2. Verify identity: is_comp
-        # 3. Verify content equality and non-identity: eq_not_is
+        # 3. Verify equality of value and non-identity: eq_not_is
         # 4. Verify that two lists have the same elements, order irrelevant: elems_comp
         # 5. Verify that two lists have same elements in same order: order_comp
         # 6. Verify that two floats are close enough: approx_eq
@@ -79,6 +99,7 @@ class Unit():
         self.is_mutator = is_mutator
         self.test_type = test_type
         self.score = 0
+        self.extra_credit = extra_credit
 
     def add_test(self, new_test):
         self.cases.append(new_test)
@@ -94,24 +115,40 @@ class UnitTest():
     def run_test(self):
         test_file = open("report.txt", "w")
         test_file.write(self.name + "\n")
+        now = datetime.now()
+        dt_string = now.strftime("Date: %m/%d/%Y, Time: %H:%M:%S")
+        test_file.write(dt_string + "\n")
         total_score = 0
         pts_lost_dict = {}
         for unit in self.units:
             pts_lost_dict[unit.name] = 0
-            test_file.write("\nFunction: \"" + unit.name + "\"\n")
+            if unit.extra_credit:
+                header_str = "\nFunction: \"" + unit.name + "\"" + "(extra credit)\n"
+            else:
+                header_str = "\nFunction: \"" + unit.name + "\"\n"
+            test_file.write(header_str)
             for case in unit.cases:
-                self.num_tests += 1
+                if not unit.extra_credit:
+                    self.num_tests += 1
                 arg = case[0]
                 expected_value = case[1]
                 arg_str = build_arg_str(arg, unit.is_polyadic)
                 test_file.write("Argument(s): " + arg_str + "  ")
+                # Now flush the contents of the write buffer so that if a function hangs,
+                # the report will show precisely where it happened.
+                test_file.flush()
                 try:
                     if unit.is_polyadic:
                         actual_value = unit.func(*arg)
                     else:
                         actual_value = unit.func(arg) 
-                except:
-                    test_file.write("Crash! No point!\n")
+                except Exception as err:
+                    # Do not print error if function hasn't been implemented (no arguments defined but passing args error).
+					# This avoids giving students a wall of errors when starting project.
+                    if "takes 0 positional arguments but" not in str(err):
+                        # Print error to console
+                        traceback.print_exc()
+                    test_file.write("Crash! No points!\n")
                     pts_lost_dict[unit.name] += 1
                 else:
                     if not unit.is_mutator:
@@ -143,13 +180,12 @@ class UnitTest():
                 if pts_lost > 0:
                     test_file.write("\nFunction \"" + name + "\", points lost " + str(pts_lost) + ".")
         else:
-            test_file.write("\nPerfection!")
-        test_file.write("\nFinal Score: " + str(self.score) + "/" + str(self.num_tests))
-
-# Function List (15 total)
-# quotient, remainder, circle_area, f_to_c, c_to_f
-# hg_grade, grade_needed, linear_eq, sq_rt, nth_rt, distance
-# abs_val, digit_chop, alarm_clock, make_change, pt_to_line
+            test_file.write(" Perfection!")
+        summary = "Final Score: " + str(self.score) + "/" + str(self.num_tests)
+        grade = round((self.score / self.num_tests) * 100, 1)
+        summary += "\nGrade: " + str(grade) + "%"
+        test_file.write("\n\n" + summary)
+        print(summary)
 
 # Test Cases (tc)
 # Format: a list of tuples where each tuple
@@ -176,9 +212,9 @@ grade_needed_tc = [((90, 72, 92), 121.99999999999996),
                    ((80, 72, 92), 71.99999999999996)]
 linear_eq_tc = [((-3.2, -15, 4), -27.8),
                 ((0, 8.5, 99), 8.5)]
-sq_rt_tc = [(0, 0.0),
-            (25, 5.0),
-            (899, 29.9833287011299)]
+cube_rt_tc = [(0, 0.0),
+            (1, 1.0),
+            (1024, 10.079368399158984)]
 nth_rt_tc = [((1, 1), 1.0),
              ((144, 5), 2.701920077041227)]
 distance_tc = [((0, 0, 0, 0), 0.0),
@@ -203,7 +239,6 @@ pt_to_line_tc = [((0, -6, 0, 15), 21),
 # Create Units
 # This block will cause a crash if you haven't created all of the required functions.
 # Format: Unit(self, func, name, cases, is_polyadic, is_mutator, test_type)
-# Test types: eq_comp, is_comp, eq_not_is, elems_comp
 quotient_unit = Unit(quotient, "quotient", quotient_tc, True, False, eq_comp)
 remainder_unit = Unit(remainder, "remainder", remainder_tc, True, False, eq_comp)
 circle_area_unit = Unit(circle_area, "circle area", circle_area_tc, False, False, approx_eq)
@@ -212,7 +247,7 @@ c_to_f_unit = Unit(c_to_f, "Celcius to Fahrenheit", c_to_f_tc, False, False, app
 hg_grade_unit = Unit(hg_grade, "honors geo grade", hg_grade_tc, True, False, approx_eq)
 grade_needed_unit = Unit(grade_needed, "grade needed on final", grade_needed_tc, True, False, approx_eq)
 linear_eq_unit = Unit(linear_eq, "linear equation", linear_eq_tc, True, False, eq_comp)
-sq_rt_unit = Unit(sq_rt,"square root", sq_rt_tc, False, False, approx_eq)
+cube_rt_unit = Unit(cube_rt,"square root", cube_rt_tc, False, False, approx_eq)
 nth_rt_unit = Unit(nth_rt,"nth root", nth_rt_tc, True, False, approx_eq)
 distance_unit = Unit(distance, "distance", distance_tc, True, False, approx_eq)
 abs_val_unit = Unit(abs_val, "absolute value", abs_val_tc, False, False, approx_eq)
@@ -223,7 +258,7 @@ pt_to_line_unit = Unit(pt_to_line, "distance from point to line", pt_to_line_tc,
 
 # Unit Test List
 units = [quotient_unit, remainder_unit, circle_area_unit, f_to_c_unit, c_to_f_unit,
-         hg_grade_unit, grade_needed_unit, linear_eq_unit, sq_rt_unit, nth_rt_unit, distance_unit,
+         hg_grade_unit, grade_needed_unit, linear_eq_unit, cube_rt_unit, nth_rt_unit, distance_unit,
          abs_val_unit, digit_chop_unit, alarm_clock_unit, make_change_unit, pt_to_line_unit]
 
 # Create Unit Test
